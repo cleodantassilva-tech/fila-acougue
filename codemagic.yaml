@@ -1,0 +1,26 @@
+workflows:
+  fila-acougue-android:
+    name: Fila Açougue - Android
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: Gerar pasta android (se não existir)
+        script: |
+          if [ ! -d "android" ]; then
+            flutter create . --platforms=android --project-name fila_acougue --org com.acougue
+          fi
+      - name: Adicionar permissões de contatos e microfone
+        script: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          grep -q 'RECORD_AUDIO' "$MANIFEST" || sed -i.bak '/<manifest/a\
+    <uses-permission android:name="android.permission.INTERNET"/>\
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+' "$MANIFEST"
+      - name: Instalar dependências
+        script: flutter pub get
+      - name: Gerar APK
+        script: flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
