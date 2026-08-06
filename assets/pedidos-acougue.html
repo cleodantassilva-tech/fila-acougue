@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fila Açougue">
+<meta name="theme-color" content="#D42440">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Fila de Encomendas - A%C3%A7ougue","short_name":"Fila A%C3%A7ougue","start_url":"./","display":"standalone","orientation":"landscape","background_color":"%23FBF3EC","theme_color":"%23D42440","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 192 192%27%3E%3Crect width=%27192%27 height=%27192%27 rx=%2732%27 fill=%27%23D42440%27/%3E%3Ctext x=%2796%27 y=%27130%27 font-size=%27110%27 text-anchor=%27middle%27 fill=%27white%27%3E%F0%9F%A5%A9%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}'>
+<title>Fila de Encomendas — Açougue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --creme: #FBF3EC;
+    --papel: #F5E8DC;
+    --papel-borda: #E3D0BC;
+    --tinta: #341F1D;
+    --tinta-suave: #7A6A62;
+    --vinho: #D42440;
+    --vinho-escuro: #A6102B;
+    --vinho-escurissimo: #5C0716;
+    --aviso1h-bg: #F5A0AA;
+    --aviso1h-txt: #6E0A20;
+    --aviso30-bg: #FFD400;
+    --aviso30-txt: #4A3800;
+    --atrasado-bg: #B4001F;
+    --atrasado-txt: #FFF1F0;
+    --concluido-bg: #2FAE4E;
+    --concluido-txt: #FFFFFF;
+    --sombra: 0 2px 8px rgba(92,7,22,0.14);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; height:100%; background:var(--creme); font-family:'Inter',sans-serif; color:var(--tinta); overflow-x:hidden;}
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--papel-borda); border-radius:10px;}
+
+  .app{ display:flex; min-height:100vh; }
+
+  .sidebar{
+    width:300px; flex-shrink:0; background:var(--vinho); color:var(--creme);
+    padding:28px 24px; display:flex; flex-direction:column; gap:26px;
+    position:sticky; top:0; height:100vh; overflow-y:auto; box-shadow: var(--sombra);
+  }
+  .marca h1{ font-family:'Oswald',sans-serif; font-weight:600; font-size:24px; letter-spacing:0.5px; margin:0; text-transform:uppercase; line-height:1.15;}
+  .marca .sub{ font-size:12px; color:#F0A9B6; letter-spacing:1.5px; text-transform:uppercase;}
+  .relogio .hora{ font-family:'Oswald',sans-serif; font-size:44px; font-weight:600; letter-spacing:1px; line-height:1;}
+  .relogio .data{ font-size:12.5px; color:#F0A9B6; text-transform:capitalize; margin-top:4px;}
+
+  .resumo{ display:flex; flex-direction:column; gap:10px;}
+  .chip{
+    background:#fff; border:1px solid rgba(255,255,255,0.5); border-radius:12px;
+    padding:10px 14px; font-size:13.5px; font-weight:700; color:var(--vinho-escuro);
+    display:flex; align-items:center; gap:9px;
+  }
+  .chip .dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+
+  .legenda{ display:flex; flex-direction:column; gap:9px; font-size:12.5px; color:#EBC9CE; margin-top:auto;}
+  .legenda span{ display:inline-flex; align-items:center; gap:8px;}
+  .legenda i{ width:10px; height:10px; border-radius:3px; display:inline-block; flex-shrink:0;}
+
+  .btn-novo-sidebar{
+    background: linear-gradient(155deg, var(--vinho-escuro), var(--vinho-escurissimo)); color:#fff; border:none; border-radius:12px; padding:14px;
+    font-family:'Inter',sans-serif; font-size:15px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  }
+  .btn-novo-sidebar:active{ transform:scale(0.98); }
+
+  .painel-concluidos{ display:flex; flex-direction:column; gap:8px;}
+  .barra-concluidos{
+    background:var(--concluido-bg); color:#fff; border:none; border-radius:12px; padding:12px 14px;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer; width:100%;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.2);
+  }
+  .barra-concluidos:active{ transform:scale(0.98);}
+  .barra-concluidos .contagem{ background:rgba(255,255,255,0.3); padding:2px 10px; border-radius:999px; font-size:12.5px;}
+  .lista-concluidos{ display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;}
+  .lista-concluidos.fechado{ display:none;}
+  .item-concluido{
+    background:rgba(255,255,255,0.95); color:var(--tinta); border-radius:10px; padding:9px 12px;
+    display:flex; flex-direction:column; gap:3px;
+  }
+  .item-concluido .nome-c{ font-weight:700; font-size:13px;}
+  .item-concluido .meta-c{ display:flex; align-items:center; justify-content:space-between; font-size:11.5px; color:var(--tinta-suave);}
+  .item-concluido .meta-c button{
+    border:none; background:none; color:var(--vinho-escuro); font-weight:700; cursor:pointer; font-size:11.5px; padding:0;
+  }
+  .vazio-concluidos{ color:rgba(255,255,255,0.75); font-size:12.5px; padding:4px 2px;}
+
+  .conteudo{ flex:1; min-width:0; overflow-y:auto; height:100vh;}
+
+  .lista{
+    padding: 28px 32px 140px 32px;
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+    gap:18px;
+    align-items:start;
+  }
+  .vazio{ grid-column: 1 / -1; text-align:center; padding:80px 20px; color:var(--tinta-suave);}
+  .vazio .icone{font-size:52px; margin-bottom:10px;}
+  .vazio h2{font-family:'Oswald',sans-serif; font-weight:500; color:var(--vinho-escuro); margin:0 0 6px 0;}
+
+  .card{
+    border-radius:18px; padding:18px 22px; box-shadow:var(--sombra);
+    background:var(--papel); border:1px solid var(--papel-borda);
+    display:flex; flex-direction:column; gap:12px; transition: background .3s ease, transform .15s ease;
+  }
+  .card.estado-1h{ background:var(--aviso1h-bg); color:var(--aviso1h-txt); border-color:transparent;}
+  .card.estado-30{ background:var(--aviso30-bg); color:var(--aviso30-txt); border-color:transparent;}
+  .card.estado-atrasado{ background:var(--atrasado-bg); color:var(--atrasado-txt); border-color:transparent; animation: pulsar 1.6s ease-in-out infinite;}
+  .card.estado-concluido{ background:var(--concluido-bg); color:var(--concluido-txt); border-color:transparent;}
+  @keyframes pulsar{ 0%,100%{ box-shadow:0 0 0 0 rgba(122,12,30,0.45);} 50%{ box-shadow:0 0 0 10px rgba(122,12,30,0);} }
+
+  .nome-destaque{
+    font-size:24px; font-weight:800; line-height:1.2;
+    display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0;
+  }
+  .tag-status{ display:inline-block; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; padding:3px 9px; border-radius:6px; vertical-align:middle;}
+  .tag-atrasado{ background:#fff; color:var(--atrasado-bg);}
+
+  .linha-detalhes{ display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center;}
+  .item-detalhe{
+    display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600;
+    background:rgba(255,255,255,0.4); padding:5px 11px; border-radius:8px; white-space:nowrap;
+  }
+  .item-detalhe.item-pedido{ white-space:normal;}
+  .card.estado-atrasado .item-detalhe, .card.estado-30 .item-detalhe{ background:rgba(255,255,255,0.18);}
+
+  .acoes{ display:flex; flex-direction:row; flex-wrap:wrap; gap:8px; align-items:center;}
+  .btn{
+    border:none; border-radius:9px; padding:8px 12px; font-size:12.5px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+    font-family:'Inter',sans-serif; transition: filter .15s ease, transform .1s ease;
+  }
+  .btn:active{ transform: scale(0.97);}
+  .btn-feito{ background:var(--concluido-bg); color:#fff;}
+  .btn-feito:hover{ filter:brightness(1.1);}
+  .btn-zap{ background:#2D6CDF; color:#fff;}
+  .btn-zap.saiu{ background:#128C7E;}
+  .btn-secundario{ background:rgba(255,255,255,0.5); color:inherit;}
+  .card.estado-atrasado .btn-secundario, .card.estado-30 .btn-secundario{ background:rgba(255,255,255,0.22); color:#fff;}
+
+  .fab{
+    position:fixed; right:28px; bottom:28px; width:64px; height:64px; border-radius:50%;
+    background: var(--vinho);
+    color:#fff; font-size:32px; border:none; box-shadow:0 6px 18px rgba(212,36,64,0.5);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .fab:active{ transform:scale(0.95);}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(58,42,40,0.55); display:none;
+    align-items:center; justify-content:center; padding:20px; z-index:50;
+  }
+  .overlay.aberto{ display:flex;}
+  .modal{
+    background:var(--creme); border-radius:18px; padding:26px 28px; width:100%; max-width:480px;
+    max-height:90vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,0.25);
+  }
+  .modal h2{ font-family:'Oswald',sans-serif; color:var(--vinho-escuro); margin:0 0 18px 0; font-size:22px;}
+  .campo{ margin-bottom:14px;}
+  .campo label{ display:block; font-size:12.5px; font-weight:700; color:var(--tinta-suave); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px;}
+  .campo input, .campo textarea{
+    width:100%; padding:11px 13px; border-radius:10px; border:1.5px solid var(--papel-borda);
+    background:#fff; font-family:'Inter',sans-serif; font-size:15px; color:var(--tinta); resize:vertical;
+  }
+  .campo input:focus, .campo textarea:focus{ outline:none; border-color:var(--vinho);}
+  .campo .dica{ font-size:11.5px; color:var(--tinta-suave); margin-top:4px;}
+  .linha-campo-contato{ display:flex; gap:8px; align-items:stretch;}
+  .linha-campo-contato input{ flex:1;}
+  .btn-contato{
+    flex-shrink:0; width:46px; border:1.5px solid var(--papel-borda); border-radius:10px;
+    background:#fff; font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .btn-contato:active{ transform:scale(0.95);}
+  .btn-contato:disabled{ opacity:0.4; cursor:not-allowed;}
+  .btn-contato.gravando{ background:var(--atrasado-bg); border-color:var(--atrasado-bg); color:#fff; animation: pulsar 1.2s ease-in-out infinite;}
+  .modal-acoes{ display:flex; gap:10px; margin-top:20px;}
+  .modal-acoes .btn{ flex:1; padding:13px;}
+  .btn-cancelar{ background:var(--papel); color:var(--tinta);}
+  .btn-salvar{ background:var(--vinho); color:#fff; font-size:15px;}
+
+  @media (orientation: portrait){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; flex-wrap:wrap; align-items:center; gap:16px;}
+    .legenda{ margin-top:0; flex-direction:row; flex-wrap:wrap;}
+    .conteudo{ height:auto; }
+    .lista{ grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px){
+    .lista{ padding-left:16px; padding-right:16px;}
+    .card{ flex-wrap:wrap;}
+    .acoes{ min-width:100%; flex-direction:row; flex-wrap:wrap;}
+    .acoes .btn{ flex:1;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="marca">
+        <h1>Fila de Encomendas</h1>
+        <div class="sub">Açougue &amp; Mercado</div>
+      </div>
+      <div class="relogio">
+        <div class="hora" id="horaAtual">--:--</div>
+        <div class="data" id="dataAtual">—</div>
+      </div>
+      <div class="resumo" id="resumo"></div>
+      <button class="btn-novo-sidebar" id="btnNovo">+ Nova encomenda</button>
+
+      <div class="painel-concluidos">
+        <button class="barra-concluidos" id="btnToggleConcluidos">
+          <span>✓ Concluídos</span>
+          <span class="contagem" id="contagemConcluidos">0</span>
+        </button>
+        <div class="lista-concluidos fechado" id="listaConcluidos"></div>
+      </div>
+
+      <div class="legenda">
+        <span><i style="background:var(--papel); border:1px solid rgba(255,255,255,0.3);"></i>No prazo</span>
+        <span><i style="background:var(--aviso1h-bg);"></i>Falta 1h</span>
+        <span><i style="background:var(--aviso30-bg);"></i>Falta 30min</span>
+        <span><i style="background:var(--atrasado-bg);"></i>Atrasado</span>
+        <span><i style="background:var(--concluido-bg);"></i>Concluído</span>
+      </div>
+    </aside>
+
+    <main class="conteudo">
+      <div class="lista" id="lista"></div>
+    </main>
+  </div>
+
+  <button class="fab" id="btnNovoFab" title="Nova encomenda">+</button>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="modalTitulo">Nova encomenda</h2>
+      <div class="campo">
+        <label>Horário de entrega/retirada</label>
+        <input type="time" id="fHorario">
+      </div>
+      <div class="campo">
+        <label>Nome do cliente</label>
+        <div class="linha-campo-contato">
+          <input type="text" id="fNome" placeholder="Ex: Maria Silva">
+          <button type="button" class="btn-contato" id="btnContato" title="Escolher dos contatos do celular">📇</button>
+        </div>
+        <div class="dica" id="dicaContato">Toque no ícone para puxar nome e número direto dos contatos do celular.</div>
+      </div>
+      <div class="campo">
+        <label>Endereço</label>
+        <input type="text" id="fEndereco" placeholder="Ex: Rua das Flores, 123">
+      </div>
+      <div class="campo">
+        <label>WhatsApp (com DDD)</label>
+        <input type="text" id="fTelefone" placeholder="Ex: 51 99999-9999">
+        <div class="dica">Usado para os botões de aviso pelo WhatsApp. Pode deixar em branco.</div>
+      </div>
+      <div class="campo">
+        <label>Pedido</label>
+        <div class="linha-campo-contato">
+          <textarea id="fPedido" rows="3" placeholder="Ex: 2kg picanha, 1kg linguiça, 1 dz ovos"></textarea>
+          <button type="button" class="btn-contato" id="btnGravar" title="Gravar pedido por voz">🎤</button>
+        </div>
+        <div class="dica" id="dicaGravar">Toque no microfone e fale o pedido — ele transcreve pra você.</div>
+      </div>
+      <div class="modal-acoes">
+        <button class="btn btn-cancelar" id="btnCancelar">Cancelar</button>
+        <button class="btn btn-salvar" id="btnSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'encomendas';
+  let pedidos = [];
+  let editandoId = null;
+  let concluidosAbertos = false;
+  const alertasDisparados = new Set(); // evita repetir bipe pro mesmo limiar
+
+  function tocarBipe(tipo){
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const freq = tipo === 'atrasado' ? 880 : (tipo === '30' ? 660 : 520);
+      const repets = tipo === 'atrasado' ? 3 : 2;
+      for(let i=0;i<repets;i++){
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + i*0.35);
+        gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i*0.35 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.35 + 0.28);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + i*0.35);
+        osc.stop(ctx.currentTime + i*0.35 + 0.3);
+      }
+    }catch(e){ console.warn('Áudio indisponível', e); }
+  }
+
+  function minutosAte(horario){
+    const agora = new Date();
+    const [h,m] = horario.split(':').map(Number);
+    const alvo = new Date();
+    alvo.setHours(h, m, 0, 0);
+    return Math.round((alvo - agora) / 60000);
+  }
+
+  function estadoDoPedido(p){
+    if(p.status === 'concluido') return 'concluido';
+    const diff = minutosAte(p.horario);
+    if(diff <= 0) return 'atrasado';
+    if(diff <= 30) return '30';
+    if(diff <= 60) return '1h';
+    return 'normal';
+  }
+
+  function verificarAlarmes(){
+    pedidos.forEach(p=>{
+      if(p.status === 'concluido') return;
+      const estado = estadoDoPedido(p);
+      if(estado === 'normal') return;
+      const chave = p.id + '-' + estado;
+      if(!alertasDisparados.has(chave)){
+        alertasDisparados.add(chave);
+        tocarBipe(estado);
+      }
+    });
+  }
+
+  async function carregarPedidos(){
+    try{
+      const bruto = localStorage.getItem(STORAGE_KEY);
+      pedidos = bruto ? JSON.parse(bruto) : [];
+    }catch(e){
+      pedidos = [];
+    }
+    renderizar();
+  }
+
+  async function salvarPedidos(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pedidos));
+    }catch(e){
+      console.error('Erro ao salvar', e);
+      alert('Não consegui salvar — verifique se o navegador não está em modo anônimo/privado.');
+    }
+  }
+
+  function abrirModal(pedido){
+    editandoId = pedido ? pedido.id : null;
+    document.getElementById('modalTitulo').textContent = pedido ? 'Editar encomenda' : 'Nova encomenda';
+    document.getElementById('fHorario').value = pedido ? pedido.horario : '';
+    document.getElementById('fNome').value = pedido ? pedido.nome : '';
+    document.getElementById('fEndereco').value = pedido ? pedido.endereco : '';
+    document.getElementById('fTelefone').value = pedido ? pedido.telefone : '';
+    document.getElementById('fPedido').value = pedido ? pedido.pedido : '';
+    document.getElementById('overlay').classList.add('aberto');
+  }
+  function fecharModal(){
+    document.getElementById('overlay').classList.remove('aberto');
+    editandoId = null;
+    if(typeof reconhecendo !== 'undefined' && reconhecendo){
+      if(recognizer){ recognizer.stop(); }
+      else if(typeof FlutterVoz !== 'undefined'){ FlutterVoz.postMessage('parar'); window.pararGravacaoUI(); }
+    }
+  }
+
+  document.getElementById('btnNovo').addEventListener('click', ()=> abrirModal(null));
+  document.getElementById('btnNovoFab').addEventListener('click', ()=> abrirModal(null));
+  document.getElementById('btnToggleConcluidos').addEventListener('click', ()=>{
+    concluidosAbertos = !concluidosAbertos;
+    renderizar();
+  });
+  document.getElementById('btnCancelar').addEventListener('click', fecharModal);
+  document.getElementById('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') fecharModal(); });
+
+  const dentroDoAppFlutter = typeof FlutterContatos !== 'undefined';
+  const suportaContatos = dentroDoAppFlutter || ('contacts' in navigator && 'ContactsManager' in window);
+  const btnContato = document.getElementById('btnContato');
+  if(!suportaContatos){
+    btnContato.disabled = true;
+    document.getElementById('dicaContato').textContent = 'Esse celular/navegador não permite abrir a agenda de contatos direto no app — só funciona em Chrome no Android ou no app instalado. Pode digitar o número normalmente.';
+  }
+  window.receberContato = function(nome, telefone){
+    if(nome) document.getElementById('fNome').value = nome;
+    if(telefone) document.getElementById('fTelefone').value = telefone;
+  };
+  btnContato.addEventListener('click', async ()=>{
+    if(dentroDoAppFlutter){
+      FlutterContatos.postMessage('pegar');
+      return;
+    }
+    try{
+      const contatos = await navigator.contacts.select(['name','tel'], {multiple:false});
+      if(contatos && contatos.length > 0){
+        const c = contatos[0];
+        if(c.name && c.name.length) document.getElementById('fNome').value = c.name[0];
+        if(c.tel && c.tel.length) document.getElementById('fTelefone').value = c.tel[0];
+      }
+    }catch(e){
+      console.warn('Seleção de contato cancelada ou indisponível', e);
+    }
+  });
+
+  const dentroDoAppFlutterVoz = typeof FlutterVoz !== 'undefined';
+  const ReconhecimentoVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btnGravar = document.getElementById('btnGravar');
+  let reconhecendo = false;
+  let recognizer = null;
+  let baseTextoPedido = '';
+
+  window.receberTranscricao = function(texto, ehFinal){
+    const campo = document.getElementById('fPedido');
+    campo.value = (baseTextoPedido ? baseTextoPedido + ' ' : '') + texto;
+    if(ehFinal){ baseTextoPedido = campo.value.trim(); }
+  };
+  window.pararGravacaoUI = function(){
+    reconhecendo = false;
+    btnGravar.classList.remove('gravando');
+    btnGravar.textContent = '🎤';
+  };
+
+  if(dentroDoAppFlutterVoz){
+    btnGravar.addEventListener('click', ()=>{
+      if(reconhecendo){
+        FlutterVoz.postMessage('parar');
+        window.pararGravacaoUI();
+      } else {
+        baseTextoPedido = document.getElementById('fPedido').value.trim();
+        FlutterVoz.postMessage('iniciar');
+        reconhecendo = true;
+        btnGravar.classList.add('gravando');
+        btnGravar.textContent = '⏹';
+      }
+    });
+  } else if(!ReconhecimentoVoz){
+    btnGravar.disabled = true;
+    document.getElementById('dicaGravar').textContent = 'Esse navegador não permite ditar por voz — só funciona no Chrome ou no app instalado. Pode digitar o pedido normalmente.';
+  } else {
+    recognizer = new ReconhecimentoVoz();
+    recognizer.lang = 'pt-BR';
+    recognizer.continuous = true;
+    recognizer.interimResults = false;
+
+    recognizer.addEventListener('result', (evento)=>{
+      let textoNovo = '';
+      for(let i = evento.resultIndex; i < evento.results.length; i++){
+        if(evento.results[i].isFinal) textoNovo += evento.results[i][0].transcript;
+      }
+      if(textoNovo.trim()){
+        const campo = document.getElementById('fPedido');
+        campo.value = (campo.value.trim() ? campo.value.trim() + ' ' : '') + textoNovo.trim();
+      }
+    });
+    recognizer.addEventListener('end', window.pararGravacaoUI);
+    recognizer.addEventListener('error', (e)=>{
+      console.warn('Erro no reconhecimento de voz', e);
+      window.pararGravacaoUI();
+    });
+
+    btnGravar.addEventListener('click', ()=>{
+      if(reconhecendo){
+        recognizer.stop();
+      } else {
+        recognizer.start();
+        reconhecendo = true;
+        btnGravar.classList.add('gravando');
+        btnGravar.textContent = '⏹';
+      }
+    });
+  }
+
+  document.getElementById('btnSalvar').addEventListener('click', async ()=>{
+    const horario = document.getElementById('fHorario').value;
+    const nome = document.getElementById('fNome').value.trim();
+    const endereco = document.getElementById('fEndereco').value.trim();
+    const telefone = document.getElementById('fTelefone').value.trim();
+    const pedidoTxt = document.getElementById('fPedido').value.trim();
+    if(!horario || !nome || !pedidoTxt){
+      alert('Preencha ao menos horário, nome e pedido.');
+      return;
+    }
+    if(editandoId){
+      const idx = pedidos.findIndex(p=>p.id===editandoId);
+      if(idx>-1){
+        pedidos[idx] = {...pedidos[idx], horario, nome, endereco, telefone, pedido: pedidoTxt};
+      }
+    } else {
+      pedidos.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        horario, nome, endereco, telefone, pedido: pedidoTxt,
+        status: 'pendente'
+      });
+    }
+    await salvarPedidos();
+    fecharModal();
+    renderizar();
+  });
+
+  async function marcarConcluido(id){
+    const p = pedidos.find(p=>p.id===id);
+    if(p){ p.status = p.status === 'concluido' ? 'pendente' : 'concluido'; }
+    await salvarPedidos();
+    renderizar();
+  }
+
+  async function excluirPedido(id){
+    if(!confirm('Excluir esta encomenda?')) return;
+    pedidos = pedidos.filter(p=>p.id!==id);
+    await salvarPedidos();
+    renderizar();
+  }
+
+  function linkZap(telefone, mensagem){
+    const digitos = (telefone||'').replace(/\D/g,'');
+    const comDDI = digitos.length <= 11 ? '55' + digitos : digitos;
+    return 'https://wa.me/' + comDDI + '?text=' + encodeURIComponent(mensagem);
+  }
+
+  function rotuloEstado(estado){
+    switch(estado){
+      case '1h': return 'Falta 1h';
+      case '30': return 'Falta 30min';
+      case 'atrasado': return 'Atrasado';
+      case 'concluido': return 'Feito';
+      default: return 'Na fila';
+    }
+  }
+
+  function renderizar(){
+    const agora = new Date();
+    document.getElementById('horaAtual').textContent = agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('dataAtual').textContent = agora.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long'});
+
+    const pendentes = pedidos.filter(p=>p.status!=='concluido');
+    const atrasados = pendentes.filter(p=>estadoDoPedido(p)==='atrasado').length;
+    const concluidosHoje = pedidos.filter(p=>p.status==='concluido').length;
+
+    document.getElementById('resumo').innerHTML = `
+      <div class="chip"><span class="dot" style="background:var(--vinho)"></span>${pendentes.length} na fila</div>
+      <div class="chip" style="${atrasados>0?'color:var(--atrasado-bg)':''}"><span class="dot" style="background:var(--atrasado-bg)"></span>${atrasados} atrasado(s)</div>
+    `;
+
+    // painel de concluídos na lateral
+    const concluidos = pedidos.filter(p=>p.status==='concluido').sort((a,b)=>b.horario.localeCompare(a.horario));
+    document.getElementById('contagemConcluidos').textContent = concluidos.length;
+    const listaConcluidosEl = document.getElementById('listaConcluidos');
+    listaConcluidosEl.classList.toggle('fechado', !concluidosAbertos);
+    listaConcluidosEl.innerHTML = concluidos.length === 0
+      ? `<div class="vazio-concluidos">Nenhuma encomenda concluída ainda.</div>`
+      : concluidos.map(p=>`
+          <div class="item-concluido">
+            <span class="nome-c">${escapeHtml(p.nome)}</span>
+            <span class="meta-c">${p.horario} · ${escapeHtml(p.pedido)}
+              <button onclick="marcarConcluido('${p.id}')">↩ Reabrir</button>
+            </span>
+          </div>
+        `).join('');
+
+    const ordenados = pendentes.slice().sort((a,b)=> a.horario.localeCompare(b.horario));
+
+    const lista = document.getElementById('lista');
+    if(ordenados.length===0){
+      lista.innerHTML = `<div class="vazio"><div class="icone">🥩</div><h2>Nenhuma encomenda pendente</h2><p>Toque no + para anotar o primeiro pedido do dia.</p></div>`;
+      return;
+    }
+
+    lista.innerHTML = ordenados.map(p=>{
+      const estado = estadoDoPedido(p);
+      const classeEstado = estado==='normal' ? '' : `estado-${estado}`;
+      const msgPronto = `Olá ${p.nome}! Seu pedido (${p.pedido}) já está pronto no açougue. 🥩`;
+      const msgSaiu = `Olá ${p.nome}! Sua entrega saiu e já está a caminho do endereço informado.`;
+      return `
+        <div class="card ${classeEstado}">
+          <p class="nome-destaque">${escapeHtml(p.nome)} ${estado==='atrasado' ? '<span class="tag-status tag-atrasado">Atrasado</span>' : ''}</p>
+          <div class="linha-detalhes">
+            <span class="item-detalhe">🕒 ${p.horario} · ${rotuloEstado(estado)}</span>
+            <span class="item-detalhe">📍 ${escapeHtml(p.endereco || 'Endereço não informado')}</span>
+            <span class="item-detalhe item-pedido">🛒 ${escapeHtml(p.pedido)}</span>
+          </div>
+          <div class="acoes">
+            <button class="btn btn-feito" onclick="marcarConcluido('${p.id}')">✓ Marcar feito</button>
+            ${p.telefone ? `<a class="btn btn-zap" target="_blank" rel="noopener" href="${linkZap(p.telefone, msgPronto)}">📦 Avisar pronto</a>` : ''}
+            ${p.telefone ? `<a class="btn btn-zap saiu" target="_blank" rel="noopener" href="${linkZap(p.telefone, msgSaiu)}">🚚 Saiu p/ entrega</a>` : ''}
+            <button class="btn btn-secundario" onclick='abrirModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Editar</button>
+            <button class="btn btn-secundario" onclick="excluirPedido('${p.id}')">Excluir</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  carregarPedidos();
+  setInterval(()=>{ renderizar(); verificarAlarmes(); }, 20000);
+  setInterval(()=>{ document.getElementById('horaAtual').textContent = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }, 1000);
+</script>
+</body>
+</html>
