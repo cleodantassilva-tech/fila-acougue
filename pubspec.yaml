@@ -10,9 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
   webview_flutter: ^4.10.0
-  flutter_contacts: ^2.3.1
-  speech_to_text: ^7.4.0
-  permission_handler: ^13.0.0
+  flutter_contacts: ^1.1.9+2
+  speech_to_text: ^7.0.0
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
